@@ -20,8 +20,8 @@ namespace Application
             services.AddControllers();
             services.AddDistributedRedisCache(options =>
             {
-                options.Configuration = "localhost:6379"; 
-                options.InstanceName = "ShowTimeAPI";
+                options.Configuration = "localhost, port:6379";
+                //options.InstanceName = "ShowTimeAPI";
             });
         }
 

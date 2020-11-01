@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Application.Controllers
@@ -45,11 +46,31 @@ namespace Application.Controllers
             }
         }
 
-        [HttpGet("aStuff/{id}")]
-        public async Task<ContentResult> Get(long id)
+        [HttpGet("aStuff/{key}")]
+        public async Task<ActionResult<AStuffRequest>> Get(string key)
         {
-            var value = "";
-            return Content(value, "application/json");
+            try
+            {
+                var value = await _cache.GetStringAsync(key);
+                if (string.IsNullOrEmpty(value))
+                {
+                    return NotFound();
+                }
+                var response = new AStuffRequest() 
+                {
+                    Key = key,
+                    Value = value
+                };
+                return response;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"");
+                return new ContentResult()
+                {
+                    StatusCode = 500
+                };
+            }
         }
     }
 }
