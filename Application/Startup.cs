@@ -18,10 +18,11 @@ namespace Application
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services.AddSwaggerGen();
             services.AddDistributedRedisCache(options =>
             {
                 options.Configuration = "localhost, port:6379";
-                //options.InstanceName = "ShowTimeAPI";
+                options.InstanceName = "ShowTimeAPI: ";
             });
         }
 
@@ -31,6 +32,13 @@ namespace Application
             {
                 app.UseDeveloperExceptionPage();
             }
+            app.UseSwagger();
+
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "ShowTime API V1");
+                c.RoutePrefix = string.Empty;
+            });
 
             app.UseHttpsRedirection();
 
