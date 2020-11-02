@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Application.Controllers.DataContracts;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using System;
@@ -8,26 +9,26 @@ namespace Application.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class ItemController : ControllerBase
+    public class CacheController : ControllerBase
     {
-        private readonly ILogger<ItemController> _logger;
+        private readonly ILogger<CacheController> _logger;
         private readonly IDistributedCache _cache;
 
-        public ItemController(ILogger<ItemController> logger, IDistributedCache cache)
+        public CacheController(ILogger<CacheController> logger, IDistributedCache cache)
         {
             _logger = logger;
             _cache = cache;
         }
 
-        [HttpPost("")]
-        public async Task<IActionResult> CreateAStuff(ItemRequest itemRequest)
+        [HttpPost("item")]
+        public async Task<IActionResult> CreateItem(ItemRequest itemRequest)
         {
             try
             {
                 _logger.LogInformation($"Adding new item, Value:{itemRequest.Value}!");
-
+                
                 await _cache.SetStringAsync(
-                    itemRequest.Key,
+                    itemRequest.Key.ToLower(),
                     itemRequest.Value,
                     options: new DistributedCacheEntryOptions()
                     {
@@ -45,17 +46,17 @@ namespace Application.Controllers
             }
         }
 
-        [HttpGet("{key}")]
+        [HttpGet("item/{key}")]
         public async Task<ActionResult<ItemRequest>> GetItem(string key)
         {
             try
             {
-                var value = await _cache.GetStringAsync(key);
+                var value = await _cache.GetStringAsync(key.ToLower());
                 if (string.IsNullOrEmpty(value))
                 {
                     return NotFound();
                 }
-                var response = new ItemRequest()
+                var response = new ItemResponse()
                 {
                     Key = key,
                     Value = value
@@ -65,14 +66,11 @@ namespace Application.Controllers
             catch (Exception e)
             {
                 _logger.LogError($"Error: {e}");
-                return new ContentResult()
-                {
-                    StatusCode = 500
-                };
+                return StatusCode(500);
             }
         }
 
-        [HttpDelete("{key}")]
+        [HttpDelete("item/{key}")]
         public async Task<IActionResult> RemoveItem(string key)
         {
             try
@@ -84,10 +82,7 @@ namespace Application.Controllers
             catch (Exception e)
             {
                 _logger.LogError($"Error: {e}");
-                return new ContentResult()
-                {
-                    StatusCode = 500
-                };
+                return StatusCode(500);
             }
         }
     }
