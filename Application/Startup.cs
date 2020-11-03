@@ -21,7 +21,7 @@ namespace Application
             services.AddSwaggerGen();
             services.AddDistributedRedisCache(options =>
             {
-                options.Configuration = "localhost, port:6379";
+                options.Configuration = Configuration.GetConnectionString("redis");
                 options.InstanceName = "ShowTimeAPI: ";
             });
         }

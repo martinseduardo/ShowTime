@@ -1,0 +1,24 @@
+version: "3"
+
+services:
+  showtime-api:
+    image: showtime-api
+    build:
+      context: .
+    ports:
+      - "15051:5051"
+    networks:
+      - showtime-network
+    depends_on:
+      - "showtime-redis"
+
+  showtime-redis:
+    image: redis:alpine
+    ports:
+      - "16379:6379"
+    networks:
+      - showtime-network
+
+networks:
+  showtime-network:
+    driver: bridge
