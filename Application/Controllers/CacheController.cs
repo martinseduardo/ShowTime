@@ -1,4 +1,5 @@
 ﻿using Application.Controllers.DataContracts;
+using Application.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
@@ -12,12 +13,12 @@ namespace Application.Controllers
     public class CacheController : ControllerBase
     {
         private readonly ILogger<CacheController> _logger;
-        private readonly IDistributedCache _cache;
+        private readonly ICacheService _cacheService;
 
-        public CacheController(ILogger<CacheController> logger, IDistributedCache cache)
+        public CacheController(ILogger<CacheController> logger, ICacheService cacheService)
         {
             _logger = logger;
-            _cache = cache;
+            _cacheService = cacheService;
         }
 
         [HttpPost("item")]
@@ -25,18 +26,7 @@ namespace Application.Controllers
         {
             try
             {
-                _logger.LogInformation($"Adding new item, Value:{itemRequest.Value}!");
-                
-                await _cache.SetStringAsync(
-                    itemRequest.Key.ToLower(),
-                    itemRequest.Value,
-                    options: new DistributedCacheEntryOptions()
-                    {
-                        SlidingExpiration = new TimeSpan(0, minutes: 10, 0),
-                    });
-
-                _logger.LogInformation("New item added!");
-
+                await _cacheService.SetItemOnCache(itemRequest);
                 return Ok();
             }
             catch (Exception e)
@@ -47,25 +37,16 @@ namespace Application.Controllers
         }
 
         [HttpGet("item/{key}")]
-        public async Task<ActionResult<ItemRequest>> GetItem(string key)
+        public async Task<ActionResult<ItemResponse>> GetItem(string key)
         {
             try
             {
-                var value = await _cache.GetStringAsync(key.ToLower());
-                if (string.IsNullOrEmpty(value))
-                {
-                    return NotFound();
-                }
-                var response = new ItemResponse()
-                {
-                    Key = key,
-                    Value = value
-                };
+                var response = await _cacheService.GetItemFromCache(key);
                 return Ok(response);
             }
             catch (Exception e)
             {
-                _logger.LogError($"Error: {e}");
+                _logger.LogError($"Try get item error: {e}");
                 return StatusCode(500);
             }
         }
@@ -75,13 +56,12 @@ namespace Application.Controllers
         {
             try
             {
-                await _cache.RemoveAsync(key);
-                _logger.LogInformation($"Item:{key} removed with sucess.");
+                await _cacheService.DeleteFromCache(key);
                 return Ok();
             }
             catch (Exception e)
             {
-                _logger.LogError($"Error: {e}");
+                _logger.LogError($"Try delete item error: {e}");
                 return StatusCode(500);
             }
         }
