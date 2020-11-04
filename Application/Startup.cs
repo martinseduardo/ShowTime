@@ -1,3 +1,4 @@
+using Application.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +19,7 @@ namespace Application
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services.AddScoped<ICacheService, CacheService>();
             services.AddSwaggerGen();
             services.AddDistributedRedisCache(options =>
             {
